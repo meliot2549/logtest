@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+option java_package = "com.verb.proto.log";
+
+enum LogPriority {
+    NONE = 0;
+    DEBUG = 1;
+    INFO = 2;
+    WARNING = 3;
+    ERROR = 4;
+    CRITICAL = 5;
+}
+
+/*
+ * Data published when an interesting event occurs.
+ */
+
+message LogEvent {
+    // Time the event was created, in microseconds from 2000-01-01 00:00:00.000000
+    uint64 timestamp = 1;
+
+    // Relative importance of the event
+    LogPriority priority = 2;
+
+    // Source component that generated the event
+    string source = 3;
+
+    // Information about the event
+    string description = 4;
+}
+
+/*
+ * Used for restricting LogEvents returned from service.
+ */
+message LogFilter {
+
+    // Return events later than this time
+    uint64 start_time = 1;
+
+    // Return events earlier than this time
+    uint64 end_time = 2;
+
+    // Return priorities equal or greater than this priority
+    LogPriority min_priority = 3;
+
+    // Return components with names that match this regular expression
+    string component_regex = 4;
+}
+
+message LoggerResponse {
+    enum LoggerResponseCode {
+        UNUSED = 0;
+        SUCCESSFUL = 1;
+        ERROR_BAD_REGEX = 2;
+        ERROR_ALREADY_STARTED = 3;
+        ERROR_ALREADY_STOPPED = 4;
+        ERROR_INTERNAL = 100;
+    };
+
+    LoggerResponseCode code = 1;
+    string description = 2;
+}
+
+message Null {}
+
+message GetTimeRangeResponse {
+    LoggerResponse rsp = 1;
+    uint64 begin = 2;
+    uint64 end = 3;
+}
+
+message GetEventsResponse {
+    LoggerResponse rsp = 1;
+    repeated LogEvent events = 2;
+}
+
+message GetIsRunningResponse {
+    bool running = 1;
+}
+
+service Logger {
+
+    // Start logging
+    rpc start(Null) returns(LoggerResponse);
+
+    // Stop logging
+    rpc stop(Null) returns(LoggerResponse);
+
+    // True if logger is reading log messages
+    rpc isRunning(Null) returns (GetIsRunningResponse);
+
+    // Get the timestamp range of log events
+    rpc getTimeRange(Null) returns(GetTimeRangeResponse);
+
+    // Get a list of events that match a filter
+    rpc getEvents(LogFilter) returns(GetEventsResponse);
+}
