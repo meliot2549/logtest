@@ -28,7 +28,7 @@ public class LoggerService implements LoggerGrpc.Logger {
 
     private class LogThread extends Thread {
 
-        public LogThread() {
+        private LogThread() {
             super("Logger Thread");
         }
 
@@ -46,7 +46,7 @@ public class LoggerService implements LoggerGrpc.Logger {
                         if( log != null ) {
                             lock.lock();
 
-                            // Naive implemenmtation using an array
+                            // Naive implementation using an array
                             store.add(log);
 
                             lock.unlock();
@@ -143,11 +143,16 @@ public class LoggerService implements LoggerGrpc.Logger {
         Log.GetEventsResponse.Builder rspBuilder = Log.GetEventsResponse.newBuilder();
         rspBuilder.getRspBuilder().setCode(Log.LoggerResponse.LoggerResponseCode.SUCCESSFUL);
         Iterator<Log.LogEvent> i = store.iterator();
-        lock.lock();
-        while( i.hasNext() ) {
-            rspBuilder.addEvents(i.next());
+        try {
+            lock.lock();
+            while( i.hasNext() ) {
+                rspBuilder.addEvents(i.next());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
         }
-        lock.unlock();
         responseObserver.onNext(rspBuilder.build());
         responseObserver.onCompleted();
     }
@@ -157,7 +162,6 @@ public class LoggerService implements LoggerGrpc.Logger {
             System.out.println("starting server");
 
             LoggerService service = new LoggerService();
-//            service.start(null,null);
 
             Server server = ServerBuilder.forPort(30001)
                     .addService(LoggerGrpc.bindService(service))
