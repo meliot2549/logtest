@@ -35,7 +35,7 @@ public class LogReaderImpl implements LogReader {
     }
 
     @Override
-    public Log.LogEvent read()
+    public Log.Event read()
             throws IOException, InvalidProtocolBufferException {
         byte[] packet = sock.recvBytes();
         if(packet != null && packet.length > 0)

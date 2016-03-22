@@ -6,18 +6,17 @@ package com.verb.log;
 
 import com.verb.log.impl.SimpleLogFactory;
 import com.verb.proto.log.Log;
-import com.verb.proto.log.Log.LogEvent;
 
 public class StdOutLogger {
 
     public static void main(String[] args) {
 
         SimpleLogFactory factory = new SimpleLogFactory("local");
-        LogReader reader = factory.getReader(Log.LogPriority.DEBUG);
+        LogReader reader = factory.getReader(Log.Severity.DEBUG);
 
         try {
             while (true) {
-                LogEvent log = reader.read();
+                Log.Event log = reader.read();
                 System.out.println("Received:");
                 System.out.println(log.toString());
             }

@@ -1,90 +1,112 @@
 syntax = "proto3";
-
+//package log;
 option java_package = "com.verb.proto.log";
 
-enum LogPriority {
-    NONE = 0;
-    DEBUG = 1;
-    INFO = 2;
-    WARNING = 3;
-    ERROR = 4;
-    CRITICAL = 5;
+enum Severity {
+    NONE = 0;       // Undefined
+    TRACE = 1;      // High frequency, fine-grained debugging info
+    DEBUG = 2;      // Debugging information
+    INFO = 3;       // Useful information for monitoring the system
+    WARNING = 4;    // A possibly problematic situation that is likely transient or recoverable
+    ERROR = 5;      // A definitely problematic situation that might require moving the system to a safe state
+    CRITICAL = 6;   // A situation that requires moving the system to a safe state
 }
+
+enum ResponseCode {
+    UNUSED = 0;
+    SUCCESSFUL = 1;
+    ERROR_BAD_REGEX = 2;
+    ERROR_ALREADY_STARTED = 3;
+    ERROR_ALREADY_STOPPED = 4;
+    ERROR_INDEX_OUT_OF_RANGE = 5;
+    ERROR_THREAD_FAILED_JOIN = 6;
+    ERROR_INTERNAL = 100;
+};
 
 /*
  * Data published when an interesting event occurs.
  */
 
-message LogEvent {
-    // Time the event was created, in microseconds from 2000-01-01 00:00:00.000000
+message Event {
+
+    /*
+     * Time the event was created
+     * in microseconds from 2000-01-01 00:00:00.000000
+     */
     uint64 timestamp = 1;
 
-    // Relative importance of the event
-    LogPriority priority = 2;
+    /*
+     * Relative importance of the event
+     */
+    Severity priority = 2;
 
-    // Source component that generated the event
+    /*
+     * Source component that generated the event defined as a URI
+     * <scheme>:[<host>]:<component>:[<instance-id>]
+     * Examples:
+     * log:auxiliary-controller:tool-authentication:
+     * log:system-controller:arm-controller:2
+     * log::console-gui:
+     * log:192.168.54.12:uid-estimator:
+     */
     string source = 3;
 
-    // Information about the event
+    /*
+     * A textual description of the event
+     * Limited to 128 bytes
+     */
     string description = 4;
 }
 
 /*
  * Used for restricting LogEvents returned from service.
  */
-message LogFilter {
+message Filter {
 
     // Return events later than this time
-    uint64 start_time = 1;
+    uint64 begin_time = 1;
 
     // Return events earlier than this time
     uint64 end_time = 2;
 
     // Return priorities equal or greater than this priority
-    LogPriority min_priority = 3;
+    Severity min_priority = 3;
 
     // Return components with names that match this regular expression
-    string component_regex = 4;
+    string source_regex = 4;
 }
 
-message LoggerResponse {
-    enum LoggerResponseCode {
-        UNUSED = 0;
-        SUCCESSFUL = 1;
-        ERROR_BAD_REGEX = 2;
-        ERROR_ALREADY_STARTED = 3;
-        ERROR_ALREADY_STOPPED = 4;
-        ERROR_INTERNAL = 100;
-    };
+message Response {
 
-    LoggerResponseCode code = 1;
-    string description = 2;
+    ResponseCode code = 1;
+
 }
 
 message Null {}
 
 message GetTimeRangeResponse {
-    LoggerResponse rsp = 1;
+    ResponseCode code = 1;
     uint64 begin = 2;
     uint64 end = 3;
 }
 
 message GetEventsResponse {
-    LoggerResponse rsp = 1;
-    repeated LogEvent events = 2;
+    ResponseCode code = 1;
+    repeated Event events = 2;
 }
 
 message GetIsRunningResponse {
-    bool running = 1;
+    ResponseCode code = 1;
+    bool running = 2;
 }
 
 service Logger {
 
     // Start logging
-    rpc start(Null) returns(LoggerResponse);
+    rpc start(Null) returns(Response);
 
     // Stop logging
-    rpc stop(Null) returns(LoggerResponse);
+    rpc stop(Null) returns(Response);
 
     // True if logger is reading log messages
     rpc isRunning(Null) returns (GetIsRunningResponse);
@@ -93,5 +115,5 @@ service Logger {
     rpc getTimeRange(Null) returns(GetTimeRangeResponse);
 
     // Get a list of events that match a filter
-    rpc getEvents(LogFilter) returns(GetEventsResponse);
+    rpc getEvents(Filter) returns(GetEventsResponse);
 }

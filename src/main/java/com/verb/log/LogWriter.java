@@ -9,7 +9,7 @@ import com.verb.proto.log.Log;
 
 public interface LogWriter {
 
-    void write(Log.LogPriority priority, String message);
+    void write(Log.Severity priority, String message);
 
     String getTopic();
 

@@ -9,7 +9,7 @@ public interface LogFactory {
 
     LogWriter getWriter(String component);
 
-    LogReader getReader(Log.LogPriority minimumPriority);
+    LogReader getReader(Log.Severity minimumPriority);
 
-    LogReader getReader(Log.LogPriority minimumPriority, int timeout);
+    LogReader getReader(Log.Severity minimumPriority, int timeout);
 }

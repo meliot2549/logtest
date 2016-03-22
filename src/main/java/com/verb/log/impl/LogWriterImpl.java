@@ -26,8 +26,8 @@ public class LogWriterImpl implements LogWriter {
     }
 
     @Override
-    public void write(Log.LogPriority priority, String message) {
-        Log.LogEvent log = SimpleLogFactory.createLogEvent(component, priority, message);
+    public void write(Log.Severity priority, String message) {
+        Log.Event log = SimpleLogFactory.createLogEvent(component, priority, message);
         byte[] packet = SimpleLogFactory.createLogPacket(topic,log);
         sock.send(packet);
     }

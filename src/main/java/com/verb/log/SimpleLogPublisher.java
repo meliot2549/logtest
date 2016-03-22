@@ -45,15 +45,15 @@ public class SimpleLogPublisher {
 
             System.out.println("starting logger service");
             Log.Null nullReq = Log.Null.newBuilder().build();
-            Log.LoggerResponse rsp = blockingStub.start(nullReq);
+            Log.Response rsp = blockingStub.start(nullReq);
             System.out.println(rsp);
 
             for (int i = 0; i < 5; ++i) {
                 Thread.sleep(1000);
-                writer.write(Log.LogPriority.INFO,getRandomText());
+                writer.write(Log.Severity.INFO,getRandomText());
             }
 
-            Log.LogFilter req = Log.LogFilter.newBuilder().build();
+            Log.Filter req = Log.Filter.newBuilder().build();
             Log.GetEventsResponse rsp2 = blockingStub.getEvents(req);
             System.out.println(rsp2.toString());
 

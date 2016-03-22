@@ -11,7 +11,7 @@ import nanomsg.exceptions.IOException;
 public interface LogReader {
 
     // todo change exception to hide the implementation
-    Log.LogEvent read() throws IOException, InvalidProtocolBufferException;
+    Log.Event read() throws IOException, InvalidProtocolBufferException;
 
     String getTopic();
 

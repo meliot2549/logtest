@@ -8,7 +8,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.verb.log.LogReader;
 import com.verb.log.LogWriter;
 import com.verb.proto.log.Log;
-import com.verb.proto.log.Log.LogEvent;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -39,18 +38,18 @@ public class SimpleLogFactory implements com.verb.log.LogFactory {
     }
 
     @Override
-    public LogReader getReader(Log.LogPriority minimumPriority) {
+    public LogReader getReader(Log.Severity minimumPriority) {
         return new LogReaderImpl(this.topic);
     }
 
     @Override
-    public LogReader getReader(Log.LogPriority minimumPriority, int timeout) {
+    public LogReader getReader(Log.Severity minimumPriority, int timeout) {
         return new LogReaderImpl(this.topic, timeout);
     }
 
-    static LogEvent createLogEvent(String component, Log.LogPriority prio, String message) {
+    static Log.Event createLogEvent(String component, Log.Severity prio, String message) {
         long time = (System.currentTimeMillis() * 1000) - timeOffset;
-        return LogEvent.newBuilder()
+        return Log.Event.newBuilder()
                 .setTimestamp(time)
                 .setPriority(prio)
                 .setSource(component)
@@ -58,7 +57,7 @@ public class SimpleLogFactory implements com.verb.log.LogFactory {
                 .build();
     }
 
-    static byte[] createLogPacket(String topic, LogEvent log) {
+    static byte[] createLogPacket(String topic, Log.Event log) {
         ByteBuffer buffer = ByteBuffer.allocate(topic.length()+log.getSerializedSize());
         buffer.put(topic.getBytes()).put(log.toByteArray());
         buffer.flip();
@@ -67,9 +66,9 @@ public class SimpleLogFactory implements com.verb.log.LogFactory {
         return packet;
     }
 
-    static LogEvent parseLogPacket(String topic, byte[] packet)
+    static Log.Event parseLogPacket(String topic, byte[] packet)
             throws InvalidProtocolBufferException {
         byte[] msg = Arrays.copyOfRange(packet,topic.length(),packet.length);
-        return LogEvent.parseFrom(msg);
+        return Log.Event.parseFrom(msg);
     }
 }

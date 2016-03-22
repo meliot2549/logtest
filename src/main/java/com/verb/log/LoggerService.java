@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LoggerService implements LoggerGrpc.Logger {
 
     private Thread thread = null;
-    private List<Log.LogEvent> store = new ArrayList<>();
+    private List<Log.Event> store = new ArrayList<>();
     private ReentrantLock lock = new ReentrantLock();
 
     public LoggerService() {
@@ -37,12 +37,12 @@ public class LoggerService implements LoggerGrpc.Logger {
             System.out.println("logging thread running");
 
             SimpleLogFactory factory = new SimpleLogFactory("local");
-            LogReader reader = factory.getReader(Log.LogPriority.DEBUG, 1000);
+            LogReader reader = factory.getReader(Log.Severity.DEBUG, 1000);
 
             try {
                 while( ! interrupted() ) {
                     try {
-                        Log.LogEvent log = reader.read();
+                        Log.Event log = reader.read();
                         if( log != null ) {
                             lock.lock();
 
@@ -66,28 +66,28 @@ public class LoggerService implements LoggerGrpc.Logger {
     }
 
     @Override
-    public synchronized void start(Log.Null request, StreamObserver<Log.LoggerResponse> responseObserver) {
+    public synchronized void start(Log.Null request, StreamObserver<Log.Response> responseObserver) {
         System.out.println("start");
         if (thread == null) {
             thread = new Thread(new LogThread());
             thread.start();
-            responseObserver.onNext(Log.LoggerResponse
+            responseObserver.onNext(Log.Response
                     .newBuilder()
-                    .setCode(Log.LoggerResponse.LoggerResponseCode.SUCCESSFUL)
+                    .setCode(Log.ResponseCode.SUCCESSFUL)
                     .build());
             responseObserver.onCompleted();
         }
         else {
-            responseObserver.onNext(Log.LoggerResponse
+            responseObserver.onNext(Log.Response
                     .newBuilder()
-                    .setCode(Log.LoggerResponse.LoggerResponseCode.ERROR_ALREADY_STARTED)
+                    .setCode(Log.ResponseCode.ERROR_ALREADY_STARTED)
                     .build());
             responseObserver.onCompleted();
         }
     }
 
     @Override
-    public synchronized void stop(Log.Null request, StreamObserver<Log.LoggerResponse> responseObserver) {
+    public synchronized void stop(Log.Null request, StreamObserver<Log.Response> responseObserver) {
         System.out.println("stop");
         if (thread != null) {
             try {
@@ -95,18 +95,17 @@ public class LoggerService implements LoggerGrpc.Logger {
                 thread.join(5000);
                 if( thread.isAlive() ) {
                     System.out.println("logging thread join failed");
-                    responseObserver.onNext(Log.LoggerResponse
+                    responseObserver.onNext(Log.Response
                             .newBuilder()
-                            .setCode(Log.LoggerResponse.LoggerResponseCode.ERROR_INTERNAL)
-                            .setDescription("logging thread failed to join")
+                            .setCode(Log.ResponseCode.ERROR_THREAD_FAILED_JOIN)
                             .build());
                     responseObserver.onCompleted();
                 }
                 else {
                     System.out.println("logging thread stopped");
-                    responseObserver.onNext(Log.LoggerResponse
+                    responseObserver.onNext(Log.Response
                             .newBuilder()
-                            .setCode(Log.LoggerResponse.LoggerResponseCode.SUCCESSFUL)
+                            .setCode(Log.ResponseCode.SUCCESSFUL)
                             .build());
                     responseObserver.onCompleted();
 
@@ -118,9 +117,9 @@ public class LoggerService implements LoggerGrpc.Logger {
             }
         }
         else {
-            responseObserver.onNext(Log.LoggerResponse
+            responseObserver.onNext(Log.Response
                     .newBuilder()
-                    .setCode(Log.LoggerResponse.LoggerResponseCode.ERROR_ALREADY_STARTED)
+                    .setCode(Log.ResponseCode.ERROR_ALREADY_STARTED)
                     .build());
             responseObserver.onCompleted();
         }
@@ -139,10 +138,10 @@ public class LoggerService implements LoggerGrpc.Logger {
     }
 
     @Override
-    public void getEvents(Log.LogFilter request, StreamObserver<Log.GetEventsResponse> responseObserver) {
+    public void getEvents(Log.Filter request, StreamObserver<Log.GetEventsResponse> responseObserver) {
         Log.GetEventsResponse.Builder rspBuilder = Log.GetEventsResponse.newBuilder();
-        rspBuilder.getRspBuilder().setCode(Log.LoggerResponse.LoggerResponseCode.SUCCESSFUL);
-        Iterator<Log.LogEvent> i = store.iterator();
+        rspBuilder.setCode(Log.ResponseCode.SUCCESSFUL);
+        Iterator<Log.Event> i = store.iterator();
         try {
             lock.lock();
             while( i.hasNext() ) {
